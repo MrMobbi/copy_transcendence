@@ -1,0 +1,72 @@
+version: '3.8'
+services:
+  frontend:
+    image: transcendence/frontend
+    container_name: transcendence_frontend
+    build:
+      context: app/frontend/
+      dockerfile: Dockerfile
+    ports:
+      - ${FRONTEND_PORT}:443
+    networks:
+      - transcendance_network
+    volumes:
+      - ./app/frontend/public:/home/transcendence/public
+    environment:
+      BACKEND_API_URL: ${BACKEND_API_URL}
+
+  backend:
+    image: transcendence/backend
+    container_name: transcendence_backend
+    build:
+      context: app/backend/
+      dockerfile: Dockerfile
+    ports:
+      - ${BACKEND_PORT}:443
+    networks:
+      - transcendance_network
+    volumes:
+      - ./app/backend/src:/home/transcendence/src
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      FRONTEND_URL: ${FRONTEND_URL}
+      BACKEND_API_URL: ${BACKEND_API_URL}
+      MEDIA_URL: ${MEDIA_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    container_name: transcendence_db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - ${DB_PORT}:5432
+    networks:
+      - transcendance_network
+    volumes:
+      - ./app/db/data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mail:
+    image: mailhog/mailhog
+    container_name: transcendence_mail
+    ports:
+      - "8025:8025"
+    networks:
+      - transcendance_network
+
+networks:
+  transcendance_network:
+    driver: bridge

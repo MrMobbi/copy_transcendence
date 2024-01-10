@@ -1,0 +1,14 @@
+# venv
+venv
+
+# django
+*.log
+*.pot
+*.pyc
+__pycache__
+db.sqlite3
+media
+src/staticfiles
+
+# logs
+src/logs/*
